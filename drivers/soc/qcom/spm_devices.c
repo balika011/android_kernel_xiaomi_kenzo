@@ -681,6 +681,8 @@ static int msm_spm_dev_probe(struct platform_device *pdev)
 
 	msm_spm_drv_reg_init(&dev->reg_data, &spm_data);
 
+	msm_spm_drv_reg_init(&dev->reg_data, &spm_data);
+
 	for (i = 0; i < ARRAY_SIZE(spm_of_data); i++) {
 		ret = of_property_read_u32(node, spm_of_data[i].key, &val);
 		if (ret)

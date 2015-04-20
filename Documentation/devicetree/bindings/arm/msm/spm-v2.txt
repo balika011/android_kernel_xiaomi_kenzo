@@ -102,6 +102,27 @@ Optional properties for only PSCI targets:
 	can control.
 
 
+----------------------------------------------------
+PSCI targets should follow the rules shown below
+----------------------------------------------------
+Optional properties for only PSCI targets:
+
+- qcom,saw2-avs-ctl: The AVS control register
+- qcom,saw2-avs-hysterisis: The AVS hysterisis register to delay the AVS
+	controller requests
+- qcom,vctl-timeout-us: The timeout value in us to wait for voltage to change
+	after sending the voltage command to the PMIC
+- qcom,saw2-avs-limit: The AVS limit register
+- qcom,saw2-avs-dly: The AVS delay register is used to specify the delay values
+	between AVS controller requests
+- qcom,vctl-port: The PVC (PMIC Virtual Channel) port used for changing
+	voltage
+- qcom,phase-port: The PVC port used for changing the number of phases
+- qcom,pfm-port: The PVC port used for enabling PWM/PFM modes
+- qcom,cpu-vctl-list: List of cpu node phandles, whose voltage the spm device
+	can control.
+
+
 Example 1:
 	qcom,spm@f9089000 {
 		compatible = "qcom,spm-v2";
