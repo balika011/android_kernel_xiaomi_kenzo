@@ -662,10 +662,16 @@ struct rq {
 #endif
 
 #ifdef CONFIG_SCHED_HMP
+	/*
+	 * max_freq = user or thermal defined maximum
+	 * max_possible_freq = maximum supported by hardware
+	 */
+	unsigned int cur_freq, max_freq, min_freq, max_possible_freq;
 	struct sched_cluster *cluster;
 	struct cpumask freq_domain_cpumask;
 	struct hmp_sched_stats hmp_stats;
 
+	int max_possible_capacity;
 	u64 window_start;
 	int prefer_idle;
 	u32 mostly_idle_load;
