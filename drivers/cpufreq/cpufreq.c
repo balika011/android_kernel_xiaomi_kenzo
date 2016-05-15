@@ -1512,16 +1512,28 @@ static unsigned int __cpufreq_get(unsigned int cpu)
  */
 unsigned int cpufreq_get(unsigned int cpu)
 {
-	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+	struct cpufreq_policy *policy;
 	unsigned int ret_freq = 0;
+	unsigned long flags;
 
-	if (policy) {
-		down_read(&policy->rwsem);
-		ret_freq = __cpufreq_get(cpu);
-		up_read(&policy->rwsem);
+	if (cpufreq_disabled() || !cpufreq_driver)
+		return -ENOENT;
 
-		cpufreq_cpu_put(policy);
-	}
+	read_lock_irqsave(&cpufreq_driver_lock, flags);
+	policy = per_cpu(cpufreq_cpu_data, cpu);
+	read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+
+	BUG_ON(!policy);
+
+	if (!down_read_trylock(&cpufreq_rwsem))
+		return 0;
+
+	down_read(&policy->rwsem);
+
+	ret_freq = __cpufreq_get(cpu);
+
+	up_read(&policy->rwsem);
+	up_read(&cpufreq_rwsem);
 
 	return ret_freq;
 }
@@ -2244,7 +2256,7 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 		}
 	}
 
-	pr_info("driver %s up and running\n", driver_data->name);
+	pr_debug("driver %s up and running\n", driver_data->name);
 
 	return 0;
 err_if_unreg:
@@ -2273,7 +2285,7 @@ int cpufreq_unregister_driver(struct cpufreq_driver *driver)
 	if (!cpufreq_driver || (driver != cpufreq_driver))
 		return -EINVAL;
 
-	pr_info("unregistering driver %s\n", driver->name);
+	pr_debug("unregistering driver %s\n", driver->name);
 
 	subsys_interface_unregister(&cpufreq_interface);
 	unregister_hotcpu_notifier(&cpufreq_cpu_notifier);
