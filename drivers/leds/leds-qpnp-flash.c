@@ -1549,9 +1549,9 @@ static void qpnp_flashlight_led_brightness_set(struct led_classdev *led_cdev,
 {
 	struct flash_node_data *flash_node;
 	struct qpnp_flash_led *led;
+	int i;
 	flash_node = container_of(led_cdev, struct flash_node_data, cdev);
 	led = dev_get_drvdata(&flash_node->spmi_dev->dev);
-	int i;
 
 	if (value < LED_OFF) {
 		pr_err("Invalid brightness value\n");
@@ -1586,16 +1586,17 @@ static void qpnp_flashlight_led_brightness_set(struct led_classdev *led_cdev,
 				led->flash_node[led->num_leds - 1].trigger &=
 						~(0x80 >> flash_node->id);
 
-			if (flash_node->id == FLASH_LED_0)
+			if (flash_node->id == FLASH_LED_0) {
 				if (value == 100)
 					led->flash_node[led->num_leds - 1].prgm_current = 195;
 				else
 					led->flash_node[led->num_leds - 1].prgm_current = flash_node->prgm_current;
-			else if (flash_node->id == FLASH_LED_1)
+			} else if (flash_node->id == FLASH_LED_1) {
 				if (value == 100)
 					led->flash_node[led->num_leds - 1].prgm_current2 = 78;
 				else
 					led->flash_node[led->num_leds - 1].prgm_current2 = flash_node->prgm_current;
+			}
 		}
 	}
 

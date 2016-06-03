@@ -235,6 +235,14 @@ static int read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
   * This function reads stuffs and concatenate them into the
   * pre-allocated block->mapdata
   */
+int ov5670_addr_val_list[] = {
+	0x3d84, 0xC0,
+	0x3d88, 0x70,
+	0x3d89, 0x10,
+	0x3d8A, 0x70,
+	0x3d8B, 0x29,
+	0x3d81, 0x01,
+};
 static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 	struct msm_eeprom_memory_block_t *block)
 {
@@ -276,26 +284,16 @@ static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 			&(e_ctrl->i2c_client), 0x7010 + i,
 			0x0, MSM_CAMERA_I2C_BYTE_DATA);
 
-	int addr_val[] = {
-		0x3d84, 0xC0,
-		0x3d88, 0x70,
-		0x3d89, 0x10,
-		0x3d8A, 0x70,
-		0x3d8B, 0x29,
-		0x3d81, 0x01,
-	};
-
-	for (i = 0; i < (sizeof(addr_val) / sizeof(addr_val[0])) / 2; i++) {
+	for (i = 0; i < (sizeof(ov5670_addr_val_list) / sizeof(ov5670_addr_val_list[0])) / 2; i++) {
 		rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-			&(e_ctrl->i2c_client), addr_val[i * 2],
-			addr_val[i * 2 + 1], MSM_CAMERA_I2C_BYTE_DATA);
+			&(e_ctrl->i2c_client), ov5670_addr_val_list[i * 2],
+			ov5670_addr_val_list[i * 2 + 1], MSM_CAMERA_I2C_BYTE_DATA);
 		if (rc < 0)
 			return rc;
 	}
 
 	msleep(50);
 
-	// mem0
 	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read_seq(
 		&(e_ctrl->i2c_client), 0x7010,
 		memptr, 26);
