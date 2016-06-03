@@ -255,6 +255,7 @@ static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 
 	e_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_WORD_ADDR;
 
+	// Remove ??? flag.
 	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read(
 		&(e_ctrl->i2c_client), 0x5002,
 		&temp, MSM_CAMERA_I2C_BYTE_DATA);
@@ -264,63 +265,45 @@ static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 		temp & (~0x08), MSM_CAMERA_I2C_BYTE_DATA);
 	if (rc < 0)
 		return rc;
+	// Remove ??? flag end.
 
 	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
 		&(e_ctrl->i2c_client), 0x100,
 		0x01, MSM_CAMERA_I2C_BYTE_DATA);
-	for (i = 0; i <= 25; i++)
+
+	for (i = 0; i < 26; i++)
 		e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
 			&(e_ctrl->i2c_client), 0x7010 + i,
 			0x0, MSM_CAMERA_I2C_BYTE_DATA);
 
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d84,
-		0xC0, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
+	int addr_val[] = {
+		0x3d84, 0xC0,
+		0x3d88, 0x70,
+		0x3d89, 0x10,
+		0x3d8A, 0x70,
+		0x3d8B, 0x29,
+		0x3d81, 0x01,
+	};
 
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d88,
-		0x70, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d89,
-		0x10, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d8A,
-		0x70, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d8B,
-		0x29, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x3d81,
-		0x1, MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
+	for (i = 0; i < (sizeof(addr_val) / sizeof(addr_val[0])) / 2; i++) {
+		rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
+			&(e_ctrl->i2c_client), addr_val[i * 2],
+			addr_val[i * 2 + 1], MSM_CAMERA_I2C_BYTE_DATA);
+		if (rc < 0)
+			return rc;
+	}
 
 	msleep(50);
 
+	// mem0
 	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read_seq(
 		&(e_ctrl->i2c_client), 0x7010,
 		memptr, 26);
-
 	if (rc < 0)
 		return rc;
-
 	msleep(30);
 
-	for (i = 0; i <= 25; i++)
+	for (i = 0; i < 26; i++)
 		e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
 			&(e_ctrl->i2c_client), 0x7010 + i,
 			0x0, MSM_CAMERA_I2C_BYTE_DATA);
@@ -329,6 +312,7 @@ static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 		&(e_ctrl->i2c_client), 0x100,
 		0x00, MSM_CAMERA_I2C_BYTE_DATA);
 
+	// Restore ??? flag.
 	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read(
 		&(e_ctrl->i2c_client), 0x5002,
 		&temp, MSM_CAMERA_I2C_BYTE_DATA);
@@ -336,6 +320,7 @@ static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 	e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
 		&(e_ctrl->i2c_client), 0x5002,
 		temp | 0x08, MSM_CAMERA_I2C_BYTE_DATA);
+	// Restore ??? flag end.
 
 	return rc;
 }

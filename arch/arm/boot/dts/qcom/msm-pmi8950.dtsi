@@ -204,8 +204,6 @@
 			qcom,autoadjust-vfloat;
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,charge-unknown-battery;
-			qcom,board_ntc-vadc = <&pm8950_vadc>;
-			ntc_vdd-supply = <&pm8950_l16>;
 			qcom,force-aicl-rerun;
 			qcom,aicl-rerun-period-s = <180>;
 
