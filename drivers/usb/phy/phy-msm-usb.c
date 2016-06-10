@@ -5480,6 +5480,7 @@ struct msm_otg_platform_data *msm_otg_dt_to_pdata(struct platform_device *pdev)
 	struct msm_otg_platform_data *pdata;
 	int len = 0;
 	int res_gpio;
+	int usbid_switch;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata) {
@@ -5545,12 +5546,10 @@ struct msm_otg_platform_data *msm_otg_dt_to_pdata(struct platform_device *pdev)
 	if (pdata->usb_id_gpio < 0)
 		pr_debug("usb_id_gpio is not available\n");
 
-	pdata->usbid_switch = of_get_named_gpio(node, "qcom,usbid-switch", 0);
-	if (pdata->usbid_switch < 0)
-			pr_debug("Macle usbid_switch is not available\n");
-	else {
-			gpio_request(pdata->usbid_switch, "USB_ID_SWITCH");
-			gpio_direction_output(pdata->usbid_switch, 1);
+	usbid_switch = of_get_named_gpio(node, "qcom,usbid-switch", 0);
+	if (usbid_switch >= 0) {
+			gpio_request(usbid_switch, "USB_ID_SWITCH");
+			gpio_direction_output(usbid_switch, 1);
 	}
 
 	pdata->l1_supported = of_property_read_bool(node,
@@ -6449,11 +6448,7 @@ static void msm_otg_shutdown(struct platform_device *pdev)
 	struct msm_otg *motg = platform_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "OTG shutdown\n");
-	if (vbus_otg && regulator_is_enabled(vbus_otg)) {
-		msm_hsusb_vbus_power(motg, 0);
-		msleep(500);
-		dev_dbg(&pdev->dev, "OTG Vbus vreg disable ok\n");
-	}
+	msm_hsusb_vbus_power(motg, 0);
 }
 
 #ifdef CONFIG_PM_RUNTIME
