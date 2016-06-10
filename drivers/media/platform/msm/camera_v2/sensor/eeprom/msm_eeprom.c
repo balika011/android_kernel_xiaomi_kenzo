@@ -227,102 +227,6 @@ static int read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 	return rc;
 }
 /**
-  !! THIS IS A HACK! THERE SHOULD BE A BETTER WAY TO DO IT! !!
-  * ov5670_read_eeprom_memory() - read map data into buffer
-  * @e_ctrl:	eeprom control struct
-  * @block:	block to be read
-  *
-  * This function reads stuffs and concatenate them into the
-  * pre-allocated block->mapdata
-  */
-int ov5670_addr_val_list[] = {
-	0x3d84, 0xC0,
-	0x3d88, 0x70,
-	0x3d89, 0x10,
-	0x3d8A, 0x70,
-	0x3d8B, 0x29,
-	0x3d81, 0x01,
-};
-static int ov5670_read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
-	struct msm_eeprom_memory_block_t *block)
-{
-	int rc = 0;
-	uint16_t temp;
-	uint8_t *memptr = block->mapdata;
-	int i;
-
-	if (!e_ctrl) {
-		pr_err("%s e_ctrl is NULL", __func__);
-		return -EINVAL;
-	}
-
-	if (memptr == NULL) {
-		pr_err("%s please check dts config", __func__);
-		return -EINVAL;
-	}
-
-	e_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_WORD_ADDR;
-
-	// Remove ??? flag.
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read(
-		&(e_ctrl->i2c_client), 0x5002,
-		&temp, MSM_CAMERA_I2C_BYTE_DATA);
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x5002,
-		temp & (~0x08), MSM_CAMERA_I2C_BYTE_DATA);
-	if (rc < 0)
-		return rc;
-	// Remove ??? flag end.
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x100,
-		0x01, MSM_CAMERA_I2C_BYTE_DATA);
-
-	for (i = 0; i < 26; i++)
-		e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-			&(e_ctrl->i2c_client), 0x7010 + i,
-			0x0, MSM_CAMERA_I2C_BYTE_DATA);
-
-	for (i = 0; i < (sizeof(ov5670_addr_val_list) / sizeof(ov5670_addr_val_list[0])) / 2; i++) {
-		rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-			&(e_ctrl->i2c_client), ov5670_addr_val_list[i * 2],
-			ov5670_addr_val_list[i * 2 + 1], MSM_CAMERA_I2C_BYTE_DATA);
-		if (rc < 0)
-			return rc;
-	}
-
-	msleep(50);
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read_seq(
-		&(e_ctrl->i2c_client), 0x7010,
-		memptr, 26);
-	if (rc < 0)
-		return rc;
-	msleep(30);
-
-	for (i = 0; i < 26; i++)
-		e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-			&(e_ctrl->i2c_client), 0x7010 + i,
-			0x0, MSM_CAMERA_I2C_BYTE_DATA);
-
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x100,
-		0x00, MSM_CAMERA_I2C_BYTE_DATA);
-
-	// Restore ??? flag.
-	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read(
-		&(e_ctrl->i2c_client), 0x5002,
-		&temp, MSM_CAMERA_I2C_BYTE_DATA);
-
-	e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
-		&(e_ctrl->i2c_client), 0x5002,
-		temp | 0x08, MSM_CAMERA_I2C_BYTE_DATA);
-	// Restore ??? flag end.
-
-	return rc;
-}
-/**
   * msm_eeprom_parse_memory_map() - parse memory map in device node
   * @of:	device node
   * @data:	memory block for output
@@ -1770,10 +1674,7 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 			pr_err("failed rc %d\n", rc);
 			goto memdata_free;
 		}
-		if (eb_info->eeprom_name != NULL && strcmp(eb_info->eeprom_name, "sunny_omi5f06") == 0)
-			rc = ov5670_read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
-		else
-			rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
+		rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
 		if (rc < 0) {
 			pr_err("%s read_eeprom_memory failed\n", __func__);
 			goto power_down;
