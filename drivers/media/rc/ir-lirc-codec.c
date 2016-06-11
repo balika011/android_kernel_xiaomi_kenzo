@@ -316,10 +316,8 @@ static int ir_lirc_open(void *data)
 	int ret = 0;
 
 	mutex_lock(&dev->lock);
-	if (!dev->open_count++ && dev->open)
+	if (dev->open)
 		ret = dev->open(dev);
-	if (ret < 0)
-		dev->open_count--;
 	mutex_unlock(&dev->lock);
 
 	return ret;
@@ -331,7 +329,7 @@ static void ir_lirc_close(void *data)
 	struct rc_dev *dev = lirc->dev;
 
 	mutex_lock(&dev->lock);
-	if (!--dev->open_count && dev->close)
+	if (dev->close)
 		dev->close(dev);
 	mutex_unlock(&dev->lock);
 }

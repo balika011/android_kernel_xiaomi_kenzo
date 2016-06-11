@@ -1,5 +1,4 @@
-/* Copyright (C) 2013 by Xiang Xiao <xiaoxiang@xiaomi.com>
- * Copyright (C) 2016 XiaoMi, Inc.
+/* Copyright (C) Who knows by Who knows <who@knows.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,15 +28,6 @@
 #define IR_VDD_MIN_UV 2600000
 #define IR_VDD_MAX_UV 3300000
 
-#define IR_DEBUG_FS 1
-#if IR_DEBUG_FS
-#include <linux/slab.h>
-#include <linux/proc_fs.h>
-static struct proc_dir_entry *g_lct_ir_debug_proc;
-#define LCT_IR_DEBUG_PROC_FILE "pwm_ir_fs"
-#endif
-
-
 struct pwm_ir_dev {
 	struct mutex            lock;
 	struct platform_device *pdev;
@@ -58,10 +48,6 @@ struct pwm_ir_packet {
 	unsigned int       length;
 	unsigned int       next;
 };
-
-#if IR_DEBUG_FS
-struct pwm_ir_dev *g_ir_dev = NULL;
-#endif
 
 #define __devexit
 #define __devinitdata
@@ -355,100 +341,6 @@ static void pwm_ir_tx_remove(struct pwm_ir_dev *dev)
 	pwm_free(dev->pwm);
 }
 
-#if IR_DEBUG_FS
-static ssize_t lct_ir_debug_proc_write(struct file *file, const char __user *buf, size_t size, loff_t *ppos)
-{
-	char data[256] = {0};
-	char tmp_data[256] = {0};
-	char *operation = NULL;
-	char *value = NULL;
-	char *tmpValue1 = NULL;
-	char *tmpValue2 = NULL;
-	int time[256] = {0};
-	int time_count = 0;
-	int frequency_HZ = 0;
-	int duty_percent = 0;
-	int rc;
-
-	if (copy_from_user(tmp_data, buf, size)) {
-		printk("copy_from_user() fail.\n");
-		return -EFAULT;
-	}
-
-	if (g_ir_dev == NULL) {
-		printk("lct_ir_debug_proc_write Please check probe func \n");
-		return -EFAULT;
-	}
-	printk("lct_ir_debug_proc_write tmp_data = %s \n", tmp_data);
-
-	strcpy(data, tmp_data);
-	value = strchr(tmp_data, ':');
-	if (value != NULL) {
-		data[value-tmp_data] = '\0';
-		operation = data;
-		value++;
-	}
-
-	printk("lct_ir_debug_proc_write operation = %s \n", operation);
-	if (strcmp(operation, "sf") == 0) {
-		frequency_HZ = simple_strtoul(value, NULL, 10);
-		printk("lct_ir_debug_proc_write frequency_HZ=%d \n", frequency_HZ);
-		rc = pwm_ir_tx_carrier(g_ir_dev->rdev, (u32)frequency_HZ);
-		printk("lct_ir_debug_proc_write set frequency_HZ rc=%d \n", rc);
-
-	} else if (strcmp(operation, "sd") == 0) {
-		duty_percent = simple_strtoul(value, NULL, 10);
-		printk("lct_ir_debug_proc_write duty_percent=%d \n", duty_percent);
-		rc = pwm_ir_tx_duty_cycle(g_ir_dev->rdev, (u32)duty_percent);
-		printk("lct_ir_debug_proc_write set duty_percent rc=%d \n", rc);
-	} else if (strcmp(operation, "dispwm") == 0) {
-		printk("lct_ir_debug_proc_write stop PWM output \n");
-		pwm_disable(g_ir_dev->pwm);
-	} else if (strcmp(operation, "enpwm") == 0) {
-		printk("lct_ir_debug_proc_write stop PWM output \n");
-		rc = pwm_enable(g_ir_dev->pwm);
-		printk("lct_ir_debug_proc_write pwm_enable result = %d \n", rc);
-	} else if (strcmp(operation, "tx") == 0) {
-		printk("lct_ir_debug_proc_write time value = %s \n", operation);
-		tmpValue2 = value;
-		while (((tmpValue1 = strchr(tmpValue2, ':')) != NULL) || (time_count >= 50)) {
-			printk("lct_ir_debug_proc_write time tmpValue1 = %s \n", tmpValue1);
-			value[tmpValue1 - tmpValue2] = '\0';
-			time[time_count++] = simple_strtoul(value, NULL, 10);
-			tmpValue1++;
-			tmpValue2 = tmpValue1;
-			value = tmpValue2;;
-		}
-		if (time_count < 50) {
-			time[time_count++] = simple_strtoul(value, NULL, 10);
-		}
-		rc = pwm_ir_tx_transmit(g_ir_dev->rdev, (unsigned *)time, (unsigned)time_count);
-		printk("lct_ir_debug_proc_write tx result = %d \n", rc);
-	} else {
-		printk("lct_ir_debug_proc_write invalid operation = %s \n", operation);
-		return -EFAULT;
-	}
-	return size;
-}
-
-static ssize_t lct_ir_debug_proc_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
-{
-	int cnt = 0;
-	char *page = NULL;
-	page = kzalloc(128, GFP_KERNEL);
-	cnt = sprintf(page, "%s", "usage: echo \"1:38000:50\" > proc/pwm_ir_fs\n");
-	cnt = simple_read_from_buffer(buf, size, ppos, page, cnt);
-	kfree(page);
-	return cnt;
-}
-
-static const struct file_operations lct_ir_debug_proc_fops = {
-	.read		= lct_ir_debug_proc_read,
-	.write		= lct_ir_debug_proc_write,
-};
-#endif
-
-
 /* code for probe and remove */
 static int __devinit pwm_ir_probe(struct platform_device *pdev)
 {
@@ -510,17 +402,6 @@ static int __devinit pwm_ir_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to register rdev\n");
 		goto err_rc_register_device;
 	}
-
-
-#if IR_DEBUG_FS
-	g_lct_ir_debug_proc = proc_create_data(LCT_IR_DEBUG_PROC_FILE, 0660, NULL, &lct_ir_debug_proc_fops, NULL);
-	if (IS_ERR_OR_NULL(g_lct_ir_debug_proc)) {
-		printk("pwm_ir_probe create_proc_entry g_lct_ir_debug_proc failed\n");
-	} else {
-		printk("pwm_ir_probe create_proc_entry g_lct_ir_debug_proc success\n");
-	}
-	g_ir_dev = dev;
-#endif
 
 	return rc;
 
