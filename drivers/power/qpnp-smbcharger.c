@@ -38,7 +38,6 @@
 #include <linux/of_batterydata.h>
 #include <linux/msm_bcl.h>
 #include <linux/ktime.h>
-#include <linux/thermal.h>
 #include "pmic-voter.h"
 
 /* Mask/Bit helpers */
