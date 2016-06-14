@@ -1576,14 +1576,14 @@ int msm_sensor_check_id(struct msm_sensor_ctrl_t *s_ctrl)
 			CDBG("%s: It is quitai s5k3p3 meituosi VCM\n", __func__);
 		else
 			goto sensor_error;
-	} else if (strcmp(s_ctrl->sensordata->sensor_name, "ov16880_omida05") == 0) {
-		if(g_ov16880_otp_module_id == 7)
-			CDBG("%s: It is ofilm ov16880\n", __func__);
-		else
-			goto sensor_error;
 	} else if (strcmp(s_ctrl->sensordata->sensor_name, "ov16880_f16v01a") == 0) {
 		if (g_ov16880_otp_module_id == 1)
 			CDBG("%s: It is sunny ov16880\n", __func__);
+		else
+			goto sensor_error;
+	} else if (strcmp(s_ctrl->sensordata->sensor_name, "ov16880_omida05") == 0) {
+		if(g_ov16880_otp_module_id == 7)
+			CDBG("%s: It is ofilm ov16880\n", __func__);
 		else
 			goto sensor_error;
 	} else if (strcmp(s_ctrl->sensordata->sensor_name, "ov5670_d5v01g") == 0) {
