@@ -11,6 +11,7 @@
 #include <linux/decompress/unxz.h>
 #include <linux/decompress/inflate.h>
 #include <linux/decompress/unlzo.h>
+#include <linux/decompress/unlz4.h>
 
 #include <linux/types.h>
 #include <linux/string.h>
@@ -30,6 +31,9 @@
 #endif
 #ifndef CONFIG_DECOMPRESS_LZO
 # define unlzo NULL
+#endif
+#ifndef CONFIG_DECOMPRESS_LZ4
+# define unlz4 NULL
 #endif
 
 struct compress_format {
