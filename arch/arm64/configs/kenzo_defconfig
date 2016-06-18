@@ -644,4 +644,7 @@ CONFIG_IOSCHED_SIO=y
 # Extra
 #
 CONFIG_HZ_300=y
-
+#
+# CPU
+#
+CONFIG_CPU_BOOST=y 
