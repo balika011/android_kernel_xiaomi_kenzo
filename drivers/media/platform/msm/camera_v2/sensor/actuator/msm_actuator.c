@@ -91,8 +91,10 @@ static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 	struct msm_camera_i2c_reg_array *i2c_tbl = a_ctrl->i2c_reg_tbl;
 	CDBG("Enter\n");
 	
-	if(i2c_tbl == NULL)
+	if(i2c_tbl == NULL) {
 		pr_err("i2c_tbl is null!\n");
+		return;
+	}
 	
 	for (i = 0; i < size; i++) {
 		/* check that the index into i2c_tbl cannot grow larger that
